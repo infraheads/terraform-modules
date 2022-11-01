@@ -1,0 +1,14 @@
+applications:
+  - name: argo-apps
+    project: default
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: 
+    source:
+      path: 
+      repoURL: 
+      targetRevision: HEAD      
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true

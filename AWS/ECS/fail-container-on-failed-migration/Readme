@@ -1,0 +1,73 @@
+Dont judge me I don't know how to customize readme file so it will be a simple text.
+
+WARNING
+Custom docker image usage.
+
+---------------------------------------------------------------------------------------
+#IMAGES
+---------------------------------------------------------------------------------------
+On both folders are the same configurations only difference is docker image.
+The source 'nginx' image did not have net-tools package so you would not be 
+to use ifconfig command. So I pick that case, that in erroring container
+there should not be net-tools so that ifconfig command came out with non 0 exit code,
+and in the other, successing container, there IS net-tools package so that it came
+out with 0 exit code.
+
+Dockerfiles
+
+erroring: hakobmkoyan771/ifconfig:error
+FROM nginx
+
+USER 0
+
+ENTRYPOINT ["ifconfig"]
+
+CMD ["-a"]
+
+successing: hakobmkoyan771/ifconfig:success
+FROM nginx
+
+USER 0
+
+RUN apt update && apt install net-tools -y
+
+ENTRYPOINT ["ifconfig"]
+
+CMD ["-a"]
+
+
+---------------------------------------------------------------------------------------
+#Terraform Configurations
+---------------------------------------------------------------------------------------
+
+In terraform resource aws_ecs_service there is boolean a key -> 'wait_for_steady_state',
+so if you put this in your migrating configuration with 'true' value, and apply, if your containers 
+exit status was not successfull it gets stuck in your terraform stage until it
+completes.
+
+P.S. So that it would not last till "Bright Future" you can add timeouts configuration block in
+aws_ecs_service.
+
+P.S.S I didn't add timeouts in ecs.tf file, because I remembered about timeouts block after pushing codes to Git.
+
+Example
+
+resource "aws_ecs_service" "success" {
+  name = "success-svc"
+  cluster = aws_ecs_cluster.cluster.arn
+  desired_count = 1
+  launch_type = "FARGATE"
+  network_configuration {
+    assign_public_ip = true
+    subnets = [ "subnet-03f20810e9a9bcf9f", "subnet-041a52133419bb94a" ]
+  }
+  task_definition = aws_ecs_task_definition.task_def.family
+  -----------
+  wait_for_steady_state = true
+  timeouts {
+    create = "5m"
+    update = "5m"
+    delete = "5m"
+  }
+  -----------
+}

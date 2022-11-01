@@ -1,0 +1,15 @@
+applications:
+  - name: argoapps
+    project: default
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: argo-cd
+    source:
+      path: 
+      repoURL: https://github.com/argoproj/argocd-example-apps.git
+      targetRevision: HEAD
+      path: guestbook
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
